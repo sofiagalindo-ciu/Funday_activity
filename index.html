@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triple Match Memory Game: Decades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 160px);
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .card {
+            width: 150px;
+            height: 150px;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 14px;
+            user-select: none;
+            overflow: hidden;
+            position: relative;
+            text-align: center;
+            padding: 5px;
+        }
+
+        .card.revealed {
+            background: #fff;
+            color: #000;
+            cursor: default;
+        }
+
+        .card.matched {
+            background: #90ee90;
+            color: #000;
+            cursor: default;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .card.revealed img {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Triple Match Memory Game: Decades</h1>
+    <div id="game-board"></div>
+    <script>
+        const triplets = [
+            { song: "Rhapsody in Blue", decade: "The Roaring 20s", image: "images/1920.png", audio: "songs/1920.mp3" },
+            { song: "In the Mood", decade: "The Golden 30s", image: "images/1930.png", audio: "songs/1930.mp3" },
+            { song: "Boogie Woogie Bugle Boy", decade: "The Wartime 40s", image: "images/1940.png", audio: "songs/1940.mp3" },
+            { song: "Jailhouse Rock", decade: "The Rockin' 50s", image: "images/1950.png", audio: "songs/1950.mp3" },
+            { song: "Hey Jude", decade: "The Swingin' 60s", image: "images/1960.png", audio: "songs/1960.mp3" },
+            { song: "Stayin' Alive", decade: "The Disco 70s", image: "images/1970.png", audio: "songs/1970.mp3" },
+            { song: "Billie Jean", decade: "The Electric 80s", image: "images/1980.jpeg", audio: "songs/1980.mp3" },
+            { song: "Smells Like Teen Spirit", decade: "The Wired 90s", image: "images/1990.png", audio: "songs/1990.mp3" },
+            { song: "Umbrella", decade: "The Digital 2000s", image: "images/2000.png", audio: "songs/2000.mp3" },
+            { song: "Despacito", decade: "The Social 2010s", image: "images/2010.png", audio: "songs/2010.mp3" },
+            { song: "As It Was", decade: "The Streaming 2020s", image: "images/2020.jpeg", audio: "songs/2020.mp3" }
+        ];
+
+        const cards = [];
+        triplets.forEach((set, i) => {
+            cards.push({ type: 'song', value: set.song, id: i, audio: set.audio });
+            cards.push({ type: 'decade', value: set.decade, id: i });
+            cards.push({ type: 'image', value: set.image, id: i });
+        });
+
+        const shuffled = cards.sort(() => 0.5 - Math.random());
+        const board = document.getElementById("game-board");
+
+        let selected = [];
+        let lock = false;
+        let audioPlayer = new Audio();
+
+        function createCard(cardData, index) {
+            const div = document.createElement("div");
+            div.classList.add("card");
+            div.dataset.index = index;
+
+            if (cardData.type === 'image') {
+                const img = document.createElement("img");
+                img.src = cardData.value;
+                img.alt = "Image for " + cardData.value;
+                div.appendChild(img);
+            } else {
+                div.innerText = "?";
+            }
+
+            div.addEventListener("click", () => {
+                if (lock || div.classList.contains("revealed") || div.classList.contains("matched")) return;
+
+                div.classList.add("revealed");
+                if (cardData.type !== 'image') div.innerText = cardData.value;
+
+                if (cardData.type === 'song') {
+                    audioPlayer.pause();
+                    audioPlayer.src = cardData.audio;
+                    audioPlayer.play();
+                }
+
+                selected.push({ div, cardData });
+
+                if (selected.length === 3) {
+                    lock = true;
+                    setTimeout(() => {
+                        const [a, b, c] = selected;
+                        if (a.cardData.id === b.cardData.id && b.cardData.id === c.cardData.id) {
+                            a.div.classList.add("matched");
+                            b.div.classList.add("matched");
+                            c.div.classList.add("matched");
+                        } else {
+                            [a, b, c].forEach(card => {
+                                card.div.classList.remove("revealed");
+                                if (card.cardData.type !== 'image') card.div.innerText = "?";
+                            });
+                        }
+                        selected = [];
+                        lock = false;
+                    }, 1500);
+                }
+            });
+
+            return div;
+        }
+
+        shuffled.forEach((cardData, i) => {
+            board.appendChild(createCard(cardData, i));
+        });
+    </script>
+</body>
+
+</html>
